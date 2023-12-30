@@ -41,6 +41,21 @@ func LogDebug(referenceId, tracingId, message string) {
 	}
 }
 
+func LogDbg(metadata ContextfulReqMetadata, message string) {
+	logEnvConfig, logEnvConfigExists := os.LookupEnv(GO_BLAST_LOG_LEVEL)
+	if !logEnvConfigExists {
+		logAny(GO_BLAST_LOG_DEBUG_LEVEL, metadata.ReferenceId, metadata.TracingId, message)
+	} else {
+		if prohibitLogTypeOnLogLevels([]string{
+			GO_BLAST_LOG_INFO_LEVEL,
+			GO_BLAST_LOG_WARN_LEVEL,
+			GO_BLAST_LOG_ERROR_LEVEL,
+		}, logEnvConfig) {
+			logAny(GO_BLAST_LOG_DEBUG_LEVEL, metadata.ReferenceId, metadata.TracingId, message)
+		}
+	}
+}
+
 func LogInfo(referenceId, tracingId, message string) {
 	logEnvConfig, logEnvConfigExists := os.LookupEnv(GO_BLAST_LOG_LEVEL)
 	if !logEnvConfigExists {
@@ -51,6 +66,20 @@ func LogInfo(referenceId, tracingId, message string) {
 			GO_BLAST_LOG_ERROR_LEVEL,
 		}, logEnvConfig) {
 			logAny(GO_BLAST_LOG_INFO_LEVEL, referenceId, tracingId, message)
+		}
+	}
+}
+
+func LogInf(metadata ContextfulReqMetadata, message string) {
+	logEnvConfig, logEnvConfigExists := os.LookupEnv(GO_BLAST_LOG_LEVEL)
+	if !logEnvConfigExists {
+		logAny(GO_BLAST_LOG_INFO_LEVEL, metadata.ReferenceId, metadata.TracingId, message)
+	} else {
+		if prohibitLogTypeOnLogLevels([]string{
+			GO_BLAST_LOG_WARN_LEVEL,
+			GO_BLAST_LOG_ERROR_LEVEL,
+		}, logEnvConfig) {
+			logAny(GO_BLAST_LOG_INFO_LEVEL, metadata.ReferenceId, metadata.TracingId, message)
 		}
 	}
 }
@@ -68,6 +97,23 @@ func LogWarn(referenceId, tracingId, message string) {
 	}
 }
 
+func LogWrn(metadata ContextfulReqMetadata, message string) {
+	logEnvConfig, logEnvConfigExists := os.LookupEnv(GO_BLAST_LOG_LEVEL)
+	if !logEnvConfigExists {
+		logAny(GO_BLAST_LOG_WARN_LEVEL, metadata.ReferenceId, metadata.TracingId, message)
+	} else {
+		if prohibitLogTypeOnLogLevels([]string{
+			GO_BLAST_LOG_ERROR_LEVEL,
+		}, logEnvConfig) {
+			logAny(GO_BLAST_LOG_WARN_LEVEL, metadata.ReferenceId, metadata.TracingId, message)
+		}
+	}
+}
+
 func LogError(referenceId, tracingId, message string) {
 	logAny(GO_BLAST_LOG_ERROR_LEVEL, referenceId, tracingId, message)
+}
+
+func LogErr(metadata ContextfulReqMetadata, message string) {
+	logAny(GO_BLAST_LOG_ERROR_LEVEL, metadata.ReferenceId, metadata.TracingId, message)
 }
