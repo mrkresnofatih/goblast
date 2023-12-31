@@ -32,7 +32,6 @@ func (b *BackgroundWorker) Initialize() {
 }
 
 type IBackgroundWorkerSubscriber interface {
-	GetSubscriberName() string
 	ReceiveMessages() ([]BackgroundWorkerMessage[interface{}], error)
 	HandleMessage(BackgroundWorkerMessage[interface{}]) error
 	DeleteMessage(string) error
