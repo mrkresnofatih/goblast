@@ -20,7 +20,6 @@ func RegisterEndpointHelper(endpoint IEndpoint, group *echo.Group) {
 // T - struct type with validation spec
 type ContextfulReqEndpoint[T interface{}] struct {
 	Endpoint IEndpoint
-	NoAuth   bool
 }
 
 const (
@@ -78,10 +77,6 @@ func (cf *ContextfulReqEndpoint[T]) GetHandler() echo.HandlerFunc {
 		}
 		subject := c.Request().Header.Get(WELL_KNOWN_HEADER____AUTHORIZATION_CLAIMS____SUBJECT)
 		sessionId := c.Request().Header.Get(WELL_KNOWN_HEADER____AUTHORIZATION_CLAIMS____SESSION_ID)
-		if cf.NoAuth {
-			subject = ""
-			sessionId = ""
-		}
 
 		body, err := io.ReadAll(c.Request().Body)
 		if err != nil {
@@ -143,11 +138,10 @@ func (cf *ContextfulReqEndpoint[T]) Register(group *echo.Group) {
 }
 
 // Description: middleware for validation contextful requests using auth
-// T - struct type with validation spec
 // AuthManager - interface for implementing custom authentication methods
-type AuthContextfulReqEndpoint[T interface{}] struct {
-	ContextfulReqEndpoint ContextfulReqEndpoint[T]
-	AuthManager           IAuthManager
+type AuthEndpoint struct {
+	Endpoint    IEndpoint
+	AuthManager IAuthManager
 }
 
 // Description: interface for developers to implement their own authorization check methods
@@ -161,7 +155,7 @@ type AuthorizationClaims struct {
 	SessionId string
 }
 
-func (a *AuthContextfulReqEndpoint[T]) GetHandler() echo.HandlerFunc {
+func (a *AuthEndpoint) GetHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		authorizationHeader := c.Request().Header.Get(WELL_KNOWN_HEADER____AUTHORIZATION)
 		if authorizationHeader == "" {
@@ -179,14 +173,37 @@ func (a *AuthContextfulReqEndpoint[T]) GetHandler() echo.HandlerFunc {
 			c.Request().Header.Del(WELL_KNOWN_HEADER____AUTHORIZATION_CLAIMS____SESSION_ID)
 		}
 		c.Request().Header.Add(WELL_KNOWN_HEADER____AUTHORIZATION_CLAIMS____SESSION_ID, authorizationClaims.SessionId)
-		return a.ContextfulReqEndpoint.GetHandler()(c)
+		return a.Endpoint.GetHandler()(c)
 	}
 }
 
-func (a *AuthContextfulReqEndpoint[T]) GetPath() string {
-	return a.ContextfulReqEndpoint.GetPath()
+func (a *AuthEndpoint) GetPath() string {
+	return a.Endpoint.GetPath()
 }
 
-func (a *AuthContextfulReqEndpoint[T]) Register(group *echo.Group) {
+func (a *AuthEndpoint) Register(group *echo.Group) {
 	RegisterEndpointHelper(a, group)
+}
+
+// Description: middleware for clearing up authentication headers sent from client without validation
+type ClearAuthEndpoint struct {
+	Endpoint IEndpoint
+}
+
+func (cl *ClearAuthEndpoint) GetHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		authorizationHeader := c.Request().Header.Get(WELL_KNOWN_HEADER____AUTHORIZATION)
+		if authorizationHeader != "" {
+			c.Request().Header.Del(WELL_KNOWN_HEADER____AUTHORIZATION)
+		}
+		return cl.Endpoint.GetHandler()(c)
+	}
+}
+
+func (cl *ClearAuthEndpoint) GetPath() string {
+	return cl.Endpoint.GetPath()
+}
+
+func (cl *ClearAuthEndpoint) Register(group *echo.Group) {
+	RegisterEndpointHelper(cl, group)
 }
