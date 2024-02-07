@@ -192,9 +192,14 @@ type ClearAuthEndpoint struct {
 
 func (cl *ClearAuthEndpoint) GetHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		authorizationHeader := c.Request().Header.Get(WELL_KNOWN_HEADER____AUTHORIZATION)
-		if authorizationHeader != "" {
+		if c.Request().Header.Get(WELL_KNOWN_HEADER____AUTHORIZATION) != "" {
 			c.Request().Header.Del(WELL_KNOWN_HEADER____AUTHORIZATION)
+		}
+		if c.Request().Header.Get(WELL_KNOWN_HEADER____AUTHORIZATION_CLAIMS____SUBJECT) != "" {
+			c.Request().Header.Del(WELL_KNOWN_HEADER____AUTHORIZATION_CLAIMS____SUBJECT)
+		}
+		if c.Request().Header.Get(WELL_KNOWN_HEADER____AUTHORIZATION_CLAIMS____SESSION_ID) != "" {
+			c.Request().Header.Del(WELL_KNOWN_HEADER____AUTHORIZATION_CLAIMS____SESSION_ID)
 		}
 		return cl.Endpoint.GetHandler()(c)
 	}
