@@ -2,7 +2,6 @@ package goblast
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -40,7 +39,6 @@ type ContextfulReqMetadata struct {
 	ReferenceId string
 	Subject     string
 	SessionId   string
-	Ctx         context.Context
 }
 
 // Base Model to be received by the core endpoint
@@ -49,7 +47,6 @@ type ContextfulReq[T interface{}] struct {
 	ReferenceId string
 	Subject     string
 	SessionId   string
-	Ctx         context.Context
 	ReqData     T
 }
 
@@ -59,7 +56,6 @@ func (c *ContextfulReq[T]) SetMetadata(metadata ContextfulReqMetadata) {
 	c.ReferenceId = metadata.ReferenceId
 	c.Subject = metadata.Subject
 	c.SessionId = metadata.SessionId
-	c.Ctx = metadata.Ctx
 }
 
 // For exporting metadata from passed-on contextfulreq data
@@ -69,7 +65,6 @@ func (c *ContextfulReq[T]) GetMetadata() ContextfulReqMetadata {
 		ReferenceId: c.ReferenceId,
 		Subject:     c.Subject,
 		SessionId:   c.SessionId,
-		Ctx:         c.Ctx,
 	}
 }
 
@@ -116,7 +111,6 @@ func (cf *ContextfulReqEndpoint[T]) GetHandler() echo.HandlerFunc {
 			ReferenceId: referenceId,
 			Subject:     subject,
 			SessionId:   sessionId,
-			Ctx:         context.Background(),
 			ReqData:     bodyData,
 		}
 		contextfulReqBytes := new(bytes.Buffer)
