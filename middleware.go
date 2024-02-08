@@ -35,7 +35,6 @@ const (
 
 // Metadata model for base model contextfulreq
 type ContextfulReqMetadata struct {
-	TracingId   string
 	ReferenceId string
 	Subject     string
 	SessionId   string
@@ -43,7 +42,6 @@ type ContextfulReqMetadata struct {
 
 // Base Model to be received by the core endpoint
 type ContextfulReq[T interface{}] struct {
-	TracingId   string
 	ReferenceId string
 	Subject     string
 	SessionId   string
@@ -52,7 +50,6 @@ type ContextfulReq[T interface{}] struct {
 
 // For setting up metadata from passed-on contextfulreq data
 func (c *ContextfulReq[T]) SetMetadata(metadata ContextfulReqMetadata) {
-	c.TracingId = metadata.TracingId
 	c.ReferenceId = metadata.ReferenceId
 	c.Subject = metadata.Subject
 	c.SessionId = metadata.SessionId
@@ -61,7 +58,6 @@ func (c *ContextfulReq[T]) SetMetadata(metadata ContextfulReqMetadata) {
 // For exporting metadata from passed-on contextfulreq data
 func (c *ContextfulReq[T]) GetMetadata() ContextfulReqMetadata {
 	return ContextfulReqMetadata{
-		TracingId:   c.TracingId,
 		ReferenceId: c.ReferenceId,
 		Subject:     c.Subject,
 		SessionId:   c.SessionId,
@@ -70,7 +66,6 @@ func (c *ContextfulReq[T]) GetMetadata() ContextfulReqMetadata {
 
 func (cf *ContextfulReqEndpoint[T]) GetHandler() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		tracingId := uuid.NewString()
 		referenceId := c.Request().Header.Get(WELL_KNOWN_HEADER____REFERENCE_ID)
 		if referenceId == "" {
 			referenceId = uuid.NewString()
@@ -93,21 +88,20 @@ func (cf *ContextfulReqEndpoint[T]) GetHandler() echo.HandlerFunc {
 		err = validationChecker.Struct(bodyData)
 		if err != nil {
 			if _, ok := err.(*validator.InvalidValidationError); ok {
-				LogError(referenceId, tracingId, "Request Body Validation Failed")
+				LogError(referenceId, "Request Body Validation Failed")
 				return NotOkResponse(c, WELL_KNOWN_ERROR_MSG____REQ_BODY_VALIDATION_FAILED)
 			}
 
 			validationErrors := err.(validator.ValidationErrors)
 			for _, validationError := range validationErrors {
 				validationErrorMessage := "Field=" + validationError.Field() + ",Tag=" + validationError.Tag() + ",ActualTag=" + validationError.ActualTag() + ",Error=" + validationError.Error()
-				LogError(referenceId, tracingId, validationErrorMessage)
+				LogError(referenceId, validationErrorMessage)
 			}
 
 			return NotOkResponse(c, WELL_KNOWN_ERROR_MSG____REQ_BODY_VALIDATION_FAILED)
 		}
 
 		contextfulReq := ContextfulReq[T]{
-			TracingId:   tracingId,
 			ReferenceId: referenceId,
 			Subject:     subject,
 			SessionId:   sessionId,
@@ -121,7 +115,7 @@ func (cf *ContextfulReqEndpoint[T]) GetHandler() echo.HandlerFunc {
 		newR.Body = io.NopCloser(bytes.NewReader(contextfulReqBytes.Bytes()))
 		err = c.Request().ParseForm()
 		if err != nil {
-			LogError(referenceId, tracingId, "Failed to clone request")
+			LogError(referenceId, "Failed to clone request")
 			return NotOkResponse(c, "Failed to clone request")
 		}
 		c.SetRequest(newR)

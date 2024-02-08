@@ -15,7 +15,7 @@ func (b *BackgroundWorker) Initialize() {
 			for {
 				msgs, err := subscriber.ReceiveMessages()
 				if err != nil {
-					LogError(uuid.NewString(), uuid.NewString(), "Failed to receive messages")
+					LogError(uuid.NewString(), "Failed to receive messages")
 					return
 				}
 				for _, msg := range msgs {
